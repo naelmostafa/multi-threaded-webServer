@@ -5,18 +5,34 @@ class Response:
     response_message: The response message from the server
     response_data: The response data from the server
 
-    Response codes: 200:OK, 404:Forbidden, 500:Internal Server Error
-    Response messages: OK, Forbidden, Internal Server Error
+    Response codes: 200:OK, 404:Not Found, 500:Internal Server Error
+    Response messages: OK, Not Found, Internal Server Error
     Response: HTTP/1.1 {Code} {Message} \r\n {Headers} \r\n \r\n {Data}
     """
 
-    def __init__(self, status_code, message, headers):
-        self.status_code = status_code
-        self.message = message
-        self.response = f'HTTP/1.1 {self.status_code} {self.message} \r\n'
+    def __init__(self, headers: dict = None, data=None):
+        self.status_code = None
+        self.status_message = None
+        self.headers = None
+        self.response = None
+
+    def ok_status(self, headers: dict = None, data=None):
+        self.status_code = 200
+        self.status_message = 'OK'
+        self.response = f'HTTP/1.1 {self.status_code} {self.status_message} \r\n'
         if headers:
-            self.headers = headers
-            self.__set_headers(self.headers)
+            self.__set_headers(headers)
+        if data:
+            self.response += data
+        return self.response
+
+    def forbidden_status(self, headers: dict = None):
+        self.status_code = 404
+        self.status_message = 'Not Found'
+        self.response = f'HTTP/1.1 {self.status_code} {self.status_message} \r\n'
+        if headers:
+            self.__set_headers(headers)
+        return self.response
 
     def __set_headers(self, headers):
         for key, value in headers.items():

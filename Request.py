@@ -18,3 +18,9 @@ class Request:
         for key, value in headers.items():
             self.request += f'{key}: {value}\r\n'
         self.request += '\r\n'
+
+    def get_request(self):
+        return self.request
+
+    def __str__(self):
+        return self.request

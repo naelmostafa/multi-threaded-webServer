@@ -4,7 +4,7 @@ class RequestParser:
 
     @property
     def method(self):
-        return self.request.split(' ')[0]
+        return self.request.split(' ')[0].upper()
 
     @property
     def path(self):
