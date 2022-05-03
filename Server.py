@@ -1,7 +1,7 @@
 import socket
 import threading
 import RequestParser
-import ResponseBuilder
+import Response
 
 
 class Server:
@@ -41,7 +41,7 @@ class Server:
                 request_parser = RequestParser.RequestParser(request)
 
                 response = None
-                response_builder = ResponseBuilder.ResponseBuilder()
+                response_builder = Response.Response()
 
                 if request_parser.method == 'GET':
                     # GET request
