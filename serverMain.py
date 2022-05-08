@@ -1,4 +1,4 @@
-from Server.Server import Server
+from Server import Server
 import sys
 
 if __name__ == '__main__':
