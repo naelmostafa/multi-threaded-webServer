@@ -7,17 +7,16 @@ from Server.Response import Response
 
 class Server:
     FORMAT = 'utf-8'  # format
-    DISCONNECT_MESSAGE = "!DISCONNECT"  # disconnect message
     SERVER = socket.gethostbyname(socket.gethostname())  # server ip
     HEADER = 2048  # header size
+    IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif"]  # image extensions
+    TEXT_EXTENSIONS = ["txt", "html", "css", "js"]  # text extensions
 
     def __init__(self, port=80):
         self.port = port
         self.ADDR = (self.SERVER, self.port)  # server address
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(self.ADDR)
-        self.clients = []
-        self.threads = []
         self.running = True
 
     def start(self):
@@ -26,71 +25,96 @@ class Server:
         while self.running:
             print(f'[*] Waiting for clients...')
             client, addr = self.server.accept()
-            self.clients.append(client)
             thread = threading.Thread(target=self.handle, args=(client, addr))
             thread.start()
-            self.threads.append(thread)
             print(f'[*] Active connections: {threading.active_count() - 1}')
 
     def handle(self, client, addr):
         print(f'[*] Accepted connection from {addr}')
-        client.settimeout(5)
+        try:
+            msg_len = client.recv(self.HEADER).decode(self.FORMAT)
+            if msg_len:
+                request = client.recv(int(msg_len)).decode(self.FORMAT)
+        except Exception as e:
+            print(f'[*] ERROR : {e}')
+            client.close()
+            print(f'[*] Connection from {addr} closed')
+            return
+        else:
+
+            request_parser = RequestParser(request)
+            if request_parser.headers['connection'] == 'keep-alive':
+                self.handle_keep_alive(10, client, addr, request)
+            else:
+                self.handle_close(client, addr, request)
+
+    def handle_close(self, client, addr, request):
+        print(f'[*] Received request: \n{request}')
+        request_parser = RequestParser(request)
+        code = 404
+        response = None
+        response_builder = Response()
+        headers = {'connection': 'close'}
+        if request_parser.method == 'GET':
+            response, code = self.get_file(request_parser.path)
+            # get file extension
+            extension = request_parser.path.split('.')[-1].lower()
+            if extension in self.IMAGE_EXTENSIONS:
+                headers['content-type'] = 'image/' + extension
+            elif extension in self.TEXT_EXTENSIONS:
+                headers['content-type'] = 'text/' + extension
+
+        elif request_parser.method == 'POST':
+            # TODO: POST request
+            pass
+
+        response = response_builder.build_response(status_code=code, headers=headers, data=response)
+        client.send(response.encode(self.FORMAT))
+        client.close()
+        print(f'[*] Connection from {addr} closed')
+        exit(0)
+
+    def handle_keep_alive(self, timeout, client, addr, request):
+        client.settimeout(timeout)
         while True:
             try:
-                request = client.recv(self.HEADER).decode(self.FORMAT)
-
+                # TODO: keep-alive => timeout heuristically
+                print(f'[*] Received request: \n{request}')
                 request_parser = RequestParser(request)
-
+                code = 404
                 response = None
                 response_builder = Response()
-
+                headers = {'connection': 'keep-alive'}  # keep-alive
                 if request_parser.method == 'GET':
-                    # GET request
-                    if request_parser.path == '/':
-                        response = self.get_index()
-                    else:
-                        response = self.get_file(request_parser.path)
-
-                elif request_parser.method == 'POST':
+                    response, code = self.get_file(request_parser.path)
+                    # get file extension
+                    extension = request_parser.path.split('.')[-1].lower()
+                    if extension in self.TEXT_EXTENSIONS:
+                        headers['content-type'] = 'text/' + extension
+                    elif extension in self.IMAGE_EXTENSIONS:
+                        headers['content-type'] = 'image/' + extension
+                if request_parser.method == 'POST':
                     # TODO: POST request
                     pass
-
-                if response is None:
-                    response = response_builder.forbidden_status()
-                else:
-                    response = response_builder.ok_status(data=response)
-
-                if request_parser.data == self.DISCONNECT_MESSAGE:
-                    print(f'[*] {addr} disconnected')
-                    self.clients.remove(client)
-                    client.close()
-                    break
-                else:
-                    print(f'[*] {addr} > {request}')
-                    client.send(response.encode(self.FORMAT))
-
+                response = response_builder.build_response(status_code=code, headers=headers, data=response)
+                # receive request
+                msg_len = client.recv(self.HEADER).decode(self.FORMAT)
+                if msg_len:
+                    request = client.recv(int(msg_len)).decode(self.FORMAT)
             except socket.timeout:
                 print(f'[*] {addr} timed out')
-                self.clients.remove(client)
                 client.close()
                 break
-
             except Exception as e:
                 print(e)
                 break
 
     @staticmethod
-    def get_index():
-        try:
-            with open('index.html', 'r') as file:
-                return file.read()
-        except FileNotFoundError:
-            return f'File index.html not found'
-
-    @staticmethod
     def get_file(path):
+        if path == '/':
+            path = '/index.html'
         try:
             with open(path[1:], 'r') as file:
-                return file.read()
+                return file.read(), 200
         except FileNotFoundError:
-            return f'File {path[1:]} not found'
+            return f'File {path[1:]} not found', 404
