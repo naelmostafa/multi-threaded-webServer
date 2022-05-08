@@ -17,9 +17,9 @@ class RequestParser:
     @property
     def headers(self):
         headers = {}
-        for line in self.request.split('\r\n')[1:]:
+        for line in self.request.split('\r\n\r\n')[0].strip().splitlines()[1:]:
             key, value = line.split(': ')
-            headers[key] = value
+            headers[key.lower()] = value.lower()
         return headers
 
     @property

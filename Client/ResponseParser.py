@@ -19,7 +19,7 @@ class ResponseParser:
         headers = {}
         for line in self.response.split('\r\n')[1:]:
             key, value = line.split(': ')
-            headers[key] = value
+            headers[key.lower()] = value.lower()
         return headers
 
     def data(self):
