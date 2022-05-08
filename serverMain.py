@@ -1,11 +1,12 @@
-import Server
+from Server.Server import Server
 import sys
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        server = Server.Server().start()
+        server = Server().start()
     if len(sys.argv) == 2:
-        server = Server.Server(sys.argv[1]).start()
+        server = Server(sys.argv[1]).start()
 
     if len(sys.argv) > 2:
-        print("Too many arguments")
+        print("Usage: python serverMain.py [port]")
+        sys.exit(1)

@@ -1,6 +1,7 @@
 import socket
-import Request
-import ResponseParser
+
+from Client.Request import Request
+from Client.ResponseParser import ResponseParser
 
 
 class Client:
@@ -8,7 +9,7 @@ class Client:
     DISCONNECT_MESSAGE = "!DISCONNECT"  # disconnect message
     HEADER = 2048  # header size
 
-    def __init__(self, server, port=4545):
+    def __init__(self, server, port=80):
         self.port = port
         self.server = server
         self.ADDR = (self.server, self.port)
@@ -26,11 +27,11 @@ class Client:
                 url = input("URL: ")
                 data = input("Data: ")
                 # generate request and send it to server
-                request = Request.Request(method, url, self.headers, data)
+                request = Request(method, url, self.headers, data)
                 client.send(bytes(request.get_request(), self.FORMAT))
                 # receive response from server and parse it
                 response = client.recv(self.HEADER).decode(self.FORMAT)
-                response_parser = ResponseParser.ResponseParser(response)
+                response_parser = ResponseParser(response)
 
                 if response_parser.data() == self.DISCONNECT_MESSAGE:
                     client.close()

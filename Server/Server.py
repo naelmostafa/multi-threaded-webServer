@@ -1,7 +1,8 @@
 import socket
 import threading
-import RequestParser
-import Response
+
+from Server.RequestParser import RequestParser
+from Server.Response import Response
 
 
 class Server:
@@ -10,7 +11,7 @@ class Server:
     SERVER = socket.gethostbyname(socket.gethostname())  # server ip
     HEADER = 2048  # header size
 
-    def __init__(self, port=4545):
+    def __init__(self, port=80):
         self.port = port
         self.ADDR = (self.SERVER, self.port)  # server address
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,10 +39,10 @@ class Server:
             try:
                 request = client.recv(self.HEADER).decode(self.FORMAT)
 
-                request_parser = RequestParser.RequestParser(request)
+                request_parser = RequestParser(request)
 
                 response = None
-                response_builder = Response.Response()
+                response_builder = Response()
 
                 if request_parser.method == 'GET':
                     # GET request
