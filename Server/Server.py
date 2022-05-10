@@ -32,20 +32,20 @@ class Server:
     def handle(self, client, addr):
         print(f'[*] Accepted connection from {addr}')
         try:
-            msg_len = client.recv(self.HEADER).decode(self.FORMAT)
-            if msg_len:
-                request = client.recv(int(msg_len)).decode(self.FORMAT)
+            request = client.recv(self.HEADER).decode(self.FORMAT)
         except Exception as e:
             print(f'[*] ERROR : {e}')
             client.close()
             print(f'[*] Connection from {addr} closed')
             return
         else:
-
             request_parser = RequestParser(request)
-            if request_parser.headers['connection'] == 'keep-alive':
-                self.handle_keep_alive(10, client, addr, request)
-            else:
+            try:
+                if request_parser.headers['connection'] == 'keep-alive':
+                    self.handle_keep_alive(10, client, addr, request)
+                else:
+                    self.handle_close(client, addr, request)
+            except Exception as e:
                 self.handle_close(client, addr, request)
 
     def handle_close(self, client, addr, request):
