@@ -3,6 +3,15 @@ import socket
 from Client.Request import Request
 from Client.ResponseParser import ResponseParser
 
+"""
+Client class for sending requests to the server.
+METHOD - GET, POST, PUT, DELETE
+file-name - the file name to be sent to the server
+server - the host name of the server
+port - the port number of the server <default: 80>
+
+"""
+
 
 class Client:
     FORMAT = 'utf-8'  # format
@@ -12,37 +21,30 @@ class Client:
         self.port = port
         self.server = server
         self.ADDR = (self.server, self.port)
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.headers = {'Host': f'{self.server}',
-                        'Connection': 'close'}
+                        'connection': 'close'}
 
-    def start(self):
-        print('Connecting to server...')
+    # TODO: POST
 
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect(self.ADDR)
+    def start(self, method, file_name):
+        print('[*] Connecting to server...')
 
-        print("Connected to server")
+        try:
+            self.client.connect(self.ADDR)
+            print("[*] Connected to server")
 
-        method = input("Method: ")
-        url = input("path: ")
+            # generate request and send it to server
+            request = Request(method=method, path=file_name, headers=self.headers)
+            self.client.send(request.get_request().encode(self.FORMAT))
+            print("[*] Request sent\n")
 
-        # generate request and send it to server
-        request = Request(method=method, path=url, headers=self.headers)
+            # receive response from server and parse it
+            response = self.client.recv(self.HEADER).decode(self.FORMAT)
+            print(f'Received response: \n{response}')
 
-        msg_length = len(request.get_request())
-        send_length = str(msg_length).encode(self.FORMAT)
-        send_length += b' ' * (self.HEADER - len(send_length))
-
-        client.send(send_length)
-        client.send(request.get_request().encode(self.FORMAT))
-        # receive response from server and parse it
-        response = client.recv(self.HEADER).decode(self.FORMAT)
-        print(f'Received response: \n{response}')
-        response_parser = ResponseParser(response)
-        client.close()
-
-        # except Exception as e:
-        #     print(e)
-        #     break
-
-        # print(f"Response: {response}")
+        except Exception as e:
+            print(f'Error: {e}')
+        finally:
+            self.client.close()
+            print('Disconnected from server')
