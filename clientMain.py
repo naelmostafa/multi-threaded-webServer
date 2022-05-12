@@ -12,7 +12,7 @@ if __name__ == '__main__':
         method = sys.argv[1]
         file_name = sys.argv[2]
         server = sys.argv[3]
-        port = sys.argv[4]
+        port = int(sys.argv[4])
         client = Client(server=server, port=port).start(method=method, file_name=file_name)
 
     else:

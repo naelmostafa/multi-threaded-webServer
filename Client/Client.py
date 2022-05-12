@@ -51,14 +51,13 @@ class Client:
                 request.set_data(data=data)
 
             self.client.send(request.get_request().encode(self.FORMAT))
-            print("[*] Request sent\n")
-
+            print(f'[*] Request sent\n{request.get_request()}')
             # receive response from server and parse it
             response = self.client.recv(self.HEADER).decode(self.FORMAT)
             print(f'Received response: \n{response}')
             response_parser = ResponseParser(response)
-            store_file('response.html', response_parser.data())
-
+            store_file('response.html', response_parser.data)
+            print('[*] Closing connection...')  # close connection
         except Exception as e:
             print(f'Error: {e}')
         finally:
