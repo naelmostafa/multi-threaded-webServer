@@ -5,6 +5,16 @@ from Server.RequestParser import RequestParser
 from Server.Response import Response
 
 
+def get_file(path):
+    if path == '/':
+        path = '/index.html'
+    try:
+        with open(path[1:], 'r') as file:
+            return file.read(), 200
+    except FileNotFoundError:
+        return f'File {path} not found', 404
+
+
 class Server:
     FORMAT = 'utf-8'  # format
     SERVER = socket.gethostbyname(socket.gethostname())  # server ip
@@ -25,38 +35,59 @@ class Server:
         while self.running:
             print(f'[*] Waiting for clients...')
             client, addr = self.server.accept()
-            thread = threading.Thread(target=self.handle, args=(client, addr))
+            thread = threading.Thread(target=self.handle_piped, args=(client, addr))
             thread.start()
             print(f'[*] Active connections: {threading.active_count() - 1}')
 
-    def handle(self, client, addr):
+    def handle_piped(self, client, addr):
         print(f'[*] Accepted connection from {addr}')
+        client.settimeout(10)
         try:
-            request = client.recv(self.HEADER).decode(self.FORMAT)
-        except Exception as e:
-            print(f'[*] ERROR : {e}')
+            while True:
+                try:
+                    request = client.recv(self.HEADER).decode(self.FORMAT)
+                except Exception as e:
+                    print(f'[*] ERROR : {e}')
+                    client.close()
+                    print(f'[*] Connection from {addr} closed')
+                    return
+                else:
+                    request_parser = RequestParser(request)
+                    try:
+                        if request_parser.headers['connection'].lower == 'keep-alive':
+                            # Persistent and Pipeline connection
+                            thread = threading.Thread(target=self.persistent, args=(client, addr, request))
+                            thread.start()
+                        else:
+                            # Non-Persistent connection
+                            self.persistent(client, addr, request, none_persistent=True)
+                            client.close()
+                            exit()
+                            return
+                    except Exception as e:
+                        print(f'[*] Connection header ERROR : {e}')
+                        self.persistent(client, addr, request, none_persistent=True)
+                        client.close()
+                        return
+        except socket.timeout:
+            print(f'[*] ERROR : Timeout')
             client.close()
             print(f'[*] Connection from {addr} closed')
             return
-        else:
-            request_parser = RequestParser(request)
-            try:
-                if request_parser.headers['connection'] == 'keep-alive':
-                    self.handle_keep_alive(10, client, addr, request)
-                else:
-                    self.handle_close(client, addr, request)
-            except Exception as e:
-                self.handle_close(client, addr, request)
 
-    def handle_close(self, client, addr, request):
+    def persistent(self, client, addr, request, none_persistent=False):
         print(f'[*] Received request: \n{request}')
         request_parser = RequestParser(request)
         code = 404
         response = None
+        if none_persistent:
+            connection = 'close'
+        else:
+            connection = 'keep-alive'
+        headers = {'connection': f'{connection}'}
         response_builder = Response()
-        headers = {'connection': 'close'}
         if request_parser.method == 'GET':
-            response, code = self.get_file(request_parser.path)
+            response, code = get_file(request_parser.path)
             # get file extension
             extension = request_parser.path.split('.')[-1].lower()
             if extension in self.IMAGE_EXTENSIONS:
@@ -65,56 +96,16 @@ class Server:
                 headers['content-type'] = 'text/' + extension
 
         elif request_parser.method == 'POST':
-            # TODO: POST request
+            data = request_parser.data
+            code = 200
+            print(f'[*] POST data: {data}')
             pass
 
         response = response_builder.build_response(status_code=code, headers=headers, data=response)
         client.send(response.encode(self.FORMAT))
-        client.close()
-        print(f'[*] Connection from {addr} closed')
-        exit(0)
 
-    def handle_keep_alive(self, timeout, client, addr, request):
-        client.settimeout(timeout)
-        while True:
-            try:
-                # TODO: keep-alive => timeout heuristically
-                print(f'[*] Received request: \n{request}')
-                request_parser = RequestParser(request)
-                code = 404
-                response = None
-                response_builder = Response()
-                headers = {'connection': 'keep-alive'}  # keep-alive
-                if request_parser.method == 'GET':
-                    response, code = self.get_file(request_parser.path)
-                    # get file extension
-                    extension = request_parser.path.split('.')[-1].lower()
-                    if extension in self.TEXT_EXTENSIONS:
-                        headers['content-type'] = 'text/' + extension
-                    elif extension in self.IMAGE_EXTENSIONS:
-                        headers['content-type'] = 'image/' + extension
-                if request_parser.method == 'POST':
-                    # TODO: POST request
-                    pass
-                response = response_builder.build_response(status_code=code, headers=headers, data=response)
-                # receive request
-                msg_len = client.recv(self.HEADER).decode(self.FORMAT)
-                if msg_len:
-                    request = client.recv(int(msg_len)).decode(self.FORMAT)
-            except socket.timeout:
-                print(f'[*] {addr} timed out')
-                client.close()
-                break
-            except Exception as e:
-                print(e)
-                break
-
-    @staticmethod
-    def get_file(path):
-        if path == '/':
-            path = '/index.html'
-        try:
-            with open(path[1:], 'r') as file:
-                return file.read(), 200
-        except FileNotFoundError:
-            return f'File {path[1:]} not found', 404
+        if none_persistent:
+            client.close()
+            print(f'[*] Connection from {addr} closed')
+            exit()
+        return
