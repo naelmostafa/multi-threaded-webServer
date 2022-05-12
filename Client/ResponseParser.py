@@ -22,5 +22,6 @@ class ResponseParser:
             headers[key.lower()] = value.lower()
         return headers
 
+    @property
     def data(self):
         return self.response.split('\r\n\r\n')[1]
