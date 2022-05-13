@@ -54,7 +54,7 @@ class Server:
                 else:
                     request_parser = RequestParser(request)
                     try:
-                        if request_parser.headers['connection'].lower == 'keep-alive':
+                        if request_parser.headers['connection'].lower() == 'keep-alive':
                             # Persistent and Pipeline connection
                             thread = threading.Thread(target=self.persistent, args=(client, addr, request))
                             thread.start()
