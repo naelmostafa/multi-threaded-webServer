@@ -35,9 +35,9 @@
     - path: the path to the file to send to the server or receive from the server
     - port: the port to connect to the server on (default: 80)
 
-## Disclaimer
+## Disclaimer ⚠️
 - This project is not meant to be a complete web server.
 - Its purpose is to demonstrate the use of threads and sockets.
-- Still under development and testing.
+- Still under development and testing 🚧.
 - Use at your own risk.
 
