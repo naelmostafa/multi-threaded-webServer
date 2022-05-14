@@ -26,7 +26,10 @@
 ## Client
 - Standalone simple client that can be used to send requests to the server.
 - Supports GET, POST methods.
-- Supports caching using shelve which is persistence dictionary.
+- Supports caching using shelve which is persistence dictionary. 
+  - Create `cache` directory to use caching functionality.
+- Store response data in `storage` directory.
+  - Create `storage` directory to use storage functionality.
 
 ## How to run the project
 - Run the server:
