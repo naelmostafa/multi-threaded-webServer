@@ -16,8 +16,9 @@ port - the port number of the server <default: 80>
 
 
 def store_file(file_name, data):
+    print(f'[*] Storing file: {file_name}')
     try:
-        with open(file_name, 'w') as f:
+        with open(file_name, 'w+') as f:
             f.write(data)
     except IOError:
         print("File not found")
@@ -56,7 +57,11 @@ class Client:
 
             print(f'Received response: \n{response}')
             response_parser = ResponseParser(response)
-            store_file('response.html', response_parser.data)
+            file = file_name.split('/')[-1]
+            if file == '':
+                file = 'index.html'
+            response_file = f'storage/{self.server}.{file}'
+            store_file(response_file, response_parser.data)
             print('[*] Closing connection...')  # close connection
         except Exception as e:
             print(f'Error: {e}')
