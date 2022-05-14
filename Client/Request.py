@@ -27,7 +27,7 @@ class Request:
             self.data = data
             self.request += data
 
-    def get_request(self):
+    def build_request(self):
         return self.request
 
     def __str__(self):
