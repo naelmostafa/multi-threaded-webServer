@@ -1,8 +1,8 @@
+import shelve
 import socket
 
 from Client.Request import Request
 from Client.ResponseParser import ResponseParser
-from Client.Cache import Cache
 
 """
 Client class for sending requests to the server.
@@ -36,7 +36,7 @@ class Client:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.headers = {'Host': f'{self.server}',
                         'connection': 'close'}
-        self.cache = Cache(self.CACHE_PATH)
+        self.cache = shelve
 
     def start(self, method, file_name):
         print('[*] Connecting to server...')
@@ -72,21 +72,19 @@ class Client:
     def do_GET(self, file_name):
         request = Request(method='GET', path=file_name, headers=self.headers)
         cache_key = f'{self.server}:{self.port}:{file_name}'
+        response = None
         try:
-            if self.cache.is_cached(cache_key):
-                print('[*] File is cached')
-                response = self.cache.get(cache_key)
-            else:
-                print('[*] File is not cached')
-                response = self.send_request(request)
-                self.cache.set(cache_key, response)
+            with self.cache.open(self.CACHE_PATH) as cache:
+                if cache_key in cache:
+                    print('[*] Cache hit')
+                    response = cache.get(cache_key)
+                else:
+                    print('[*] Cache miss')
+                    response = self.send_request(request)
+                    cache[cache_key] = response
         except Exception as e:
             print(f'[*] ERROR: {e}')
-            self.cache.close()
-            return False
-        else:
-            self.cache.close()
-            return response
+        return response
 
     def do_POST(self, file_name):
         request = Request(method='POST', path=file_name, headers=self.headers)
