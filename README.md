@@ -19,10 +19,14 @@
 ---
 
 ## Server
-- It is a standalone multi-threaded web server that can be used to serve multiple requests at the same time with pipelining.
+- It is a standalone multi-threaded web server.
+- It is capable of handling multiple clients simultaneously.
+- It is capable of handling multiple requests simultaneously.
 
 ## Client
 - Standalone simple client that can be used to send requests to the server.
+- Supports GET, POST methods.
+- Supports caching using shelve which is persistence dictionary.
 
 ## How to run the project
 - Run the server:
