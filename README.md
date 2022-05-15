@@ -35,12 +35,12 @@
 
 ## How to run the project
 - Run the server:
-  - python Server.py <port>
+  - python serverMain.py <port>
     - port: the port to run the server on (default: 80)
     - server IP: is set to localhost `socket.gethostbyname(socket.gethostname())`
 
 - Run the client:
-  - python Client.py <path> <port>
+  - python clientMain.py <path> <port>
     - path: the path to the file to send to the server or receive from the server
     - port: the port to connect to the server on (default: 80)
 
