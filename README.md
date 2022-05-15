@@ -22,13 +22,15 @@
 - It is a standalone multi-threaded web server.
 - It is capable of handling multiple clients simultaneously.
 - It is capable of handling multiple requests simultaneously.
+- Store POST request data in `storage-server` directory.
+  - Create `storage-server` directory to use storage functionality.
 
 ## Client
 - Standalone simple client that can be used to send requests to the server.
 - Supports GET, POST methods.
 - Supports caching using shelve which is persistence dictionary. 
-  - Create `cache` directory to use caching functionality.
-- Store response data in `storage` directory.
+  - Create `cache-client` directory to use caching functionality.
+- Store response data in `storage-client` directory.
   - Create `storage` directory to use storage functionality.
 
 ## How to run the project
