@@ -15,12 +15,23 @@ def get_file(path):
         return f'File {path} not found', 404
 
 
+def store_data(file_name, data):
+    print(f'[*] Storing file: {file_name}')
+    try:
+        with open(file_name, 'w+') as f:
+            f.write(data)
+    except IOError:
+        print("Failed to store file")
+        return False
+
+
 class Server:
     FORMAT = 'utf-8'  # format
     SERVER = socket.gethostbyname(socket.gethostname())  # server ip
     HEADER = 2048  # header size
     IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif"]  # image extensions
     TEXT_EXTENSIONS = ["txt", "html", "css", "js"]  # text extensions
+    STORAGE_PATH = 'storage-server/'
 
     def __init__(self, port=80):
         self.port = port
@@ -99,7 +110,8 @@ class Server:
             data = request_parser.data
             code = 200
             print(f'[*] POST data: {data}')
-            pass
+            file_name = f'{self.STORAGE_PATH}{addr[0]}'
+            store_data(file_name, data)
 
         response = response_builder.build_response(status_code=code, headers=headers, data=response)
         client.send(response.encode(self.FORMAT))

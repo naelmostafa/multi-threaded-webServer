@@ -28,7 +28,8 @@ def store_file(file_name, data):
 class Client:
     FORMAT = 'utf-8'  # format
     HEADER = 2048  # header size
-    CACHE_PATH = 'cache/'
+    CACHE_PATH = 'cache-client/'
+    STORAGE_PATH = 'storage-client/'
 
     def __init__(self, server, port=80):
         self.port = port
@@ -60,7 +61,7 @@ class Client:
             file = file_name.split('/')[-1]
             if file == '':
                 file = 'index.html'
-            response_file = f'storage/{self.server}.{file}'
+            response_file = f'{self.STORAGE_PATH}{self.server}.{file}'
             store_file(response_file, response_parser.data)
             print('[*] Closing connection...')  # close connection
         except Exception as e:
